@@ -68,7 +68,7 @@ function Inicio() {
         <div className="wrap">
           <div className="box reveal">
             <Picture
-              url={empresa.imagen_url ?? "/images/vital-foods-about.webp"}
+              url={empresa.imagen_url}
               alt=""
               width={900}
               sizes="(max-width: 760px) 100vw, 50vw"

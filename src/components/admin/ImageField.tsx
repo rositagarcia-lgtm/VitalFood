@@ -127,7 +127,7 @@ export function ImageField({
       {!cloudinary && (
         <>
           <Input
-            placeholder="https://… o /images/…"
+            placeholder="https://…"
             value={value.url ?? ""}
             onChange={(e) => onChange({ url: e.target.value || null, publicId: null })}
           />
@@ -234,7 +234,7 @@ export function GalleryField({
       {value.length < max && !cloudinary && (
         <div className="flex gap-2">
           <Input
-            placeholder="https://… o /images/…"
+            placeholder="https://…"
             value={manual}
             onChange={(e) => setManual(e.target.value)}
           />

@@ -57,7 +57,7 @@ function Nosotros() {
     { url: e.facebook, label: "Facebook", icon: FacebookIcon },
     { url: e.tiktok, label: "TikTok", icon: TikTokIcon },
   ].filter((r) => r.url);
-  const fotoEmpresa = e.imagen_url ?? "/images/vital-foods-about.webp";
+  const fotoEmpresa = e.imagen_url;
 
   return (
     <>

@@ -25,11 +25,6 @@ export function AuthLayout({
   return (
     <div className="grid min-h-dvh bg-background lg:grid-cols-[1.05fr_1fr]">
       <aside className="relative hidden overflow-hidden bg-[#4e1420] text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <img
-          src="/images/vital-foods-about.webp"
-          alt=""
-          className="absolute inset-0 size-full object-cover opacity-25 mix-blend-luminosity"
-        />
         <div className="absolute inset-0 bg-gradient-to-br from-[#6b1f2e]/95 via-[#4e1420]/85 to-[#3a0f18]/95" />
         <div
           className="absolute inset-0 opacity-60"

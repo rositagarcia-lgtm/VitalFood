@@ -66,7 +66,6 @@ Sitio web de Vital Foods (Trujillo) con panel de administración. Todo lo que se
 ```
 db/                 Esquema y datos iniciales de PostgreSQL
 scripts/db.mjs      Migración, seed y alta de administrador
-public/images/      Imágenes iniciales optimizadas (WebP)
 src/routes/_site/   Páginas públicas: inicio, menú, detalle del plato y Nosotros
 src/routes/admin/   Panel de administración
 src/functions/      Server functions (públicas y del panel)

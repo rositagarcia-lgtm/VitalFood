@@ -2515,3 +2515,34 @@
     display: none;
   }
 }
+
+/* Sin foto: fondo de marca en lugar de un espacio vacío */
+.vf .slide .noimg {
+  position: absolute;
+  inset: 0;
+  font-size: 0;
+  background:
+    radial-gradient(circle at 78% 40%, rgba(154, 205, 50, 0.35), transparent 45%),
+    radial-gradient(circle at 92% 85%, rgba(107, 31, 46, 0.18), transparent 40%), var(--vf-cream);
+}
+.vf .teaser .box .noimg,
+.vf .intro .photo .noimg {
+  display: grid;
+  place-items: center;
+  min-height: 360px;
+  font-size: 64px;
+  color: var(--vf-wine);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(154, 205, 50, 0.35), transparent 60%),
+    var(--vf-lime-soft);
+}
+.vf .intro .photo .noimg {
+  aspect-ratio: 5 / 4;
+  min-height: 0;
+  border-radius: 24px;
+}
+@media (max-width: 760px) {
+  .vf .teaser .box .noimg {
+    min-height: 200px;
+  }
+}
