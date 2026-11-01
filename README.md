@@ -1,6 +1,6 @@
 # Vital Foods
 
-Sitio web de Vital Foods (Trujillo) con panel de administración para gestionar el menú, las sedes y las promociones.
+Sitio web de Vital Foods (Trujillo) con panel de administración. Todo lo que se ve en la web (menú, precios, calorías, banners, sedes, contacto y la página Nosotros) se edita desde el panel.
 
 ## Tecnologías
 
@@ -67,18 +67,30 @@ Sitio web de Vital Foods (Trujillo) con panel de administración para gestionar 
 db/                 Esquema y datos iniciales de PostgreSQL
 scripts/db.mjs      Migración, seed y alta de administrador
 public/images/      Imágenes iniciales optimizadas (WebP)
-src/routes/         Rutas: "/" (sitio) y "/admin/*" (panel)
+src/routes/_site/   Páginas públicas: inicio, menú, detalle del plato y Nosotros
+src/routes/admin/   Panel de administración
 src/functions/      Server functions (públicas y del panel)
 src/server/         Código que solo corre en el servidor: BD, sesión, Cloudinary
-src/components/     Componentes del sitio, del panel (admin/) y base (ui/)
+src/components/     Componentes del sitio (site/), del panel (admin/) y base (ui/)
+src/lib/nutrition.ts Cálculo de calorías y de la personalización de platos
+src/site.css        Estilos del sitio público (un solo diseño para todas las páginas)
 ```
 
 ## Sitio público
 
-- `/`: portada con banners, platillos destacados, nosotros y sedes.
-- `/menu`: menú completo en su propia página, con ruta de navegación, categorías en un menú lateral que se contrae (desplegable en celulares), buscador y precios en soles. Cada categoría tiene su propia dirección, por ejemplo `/menu?categoria=Bowls`.
+- `/`: portada con banners (pasan solos y se eligen con los puntos), cifras de la empresa, platillos destacados, presentación y sedes con mapa.
+- `/menu`: menú con buscador, categorías, filtros (objetivo, calorías, precio, dieta, ofertas, personalizable) y orden. Cada categoría tiene su propia dirección, por ejemplo `/menu?categoria=Bowls`.
+- `/menu/<plato>`: detalle con galería de fotos, valores nutricionales, ingredientes, alérgenos, conservación, platos relacionados y pedido por WhatsApp con el resumen del pedido.
+- `/nosotros`: historia, misión, visión, valores, hitos, garantías, opiniones y redes.
+- Las secciones sin datos no se muestran (por ejemplo, una cifra vacía o un plato sin nutrición).
 - En celulares hay una barra de navegación inferior, como en una app.
-- Las ofertas muestran el precio normal tachado y el precio real; los precios cambiados en los últimos 7 días llevan la etiqueta "Precio actualizado".
+- Las ofertas muestran el precio normal tachado y el porcentaje de descuento.
+
+## Calorías y personalización
+
+- En cada platillo se escriben los gramos de proteínas, carbohidratos y grasas por porción; las calorías se calculan solas con los factores de Atwater: **4 × proteínas + 4 × carbohidratos + 9 × grasas**. Si existe una ficha técnica con otra cifra, se puede escribir a mano.
+- Los platos marcados como personalizables muestran opciones de tamaño, proteína, base y extras (sección _Opciones para personalizar_). Cada opción indica cuánto cambia frente a la receta original; los tamaños multiplican la porción. El precio y las calorías se recalculan al elegir.
+- Los botones "¿Qué priorizas?" (más proteína, menos carbohidratos, más ligero, más energía) eligen automáticamente las opciones que mejor cumplen ese objetivo.
 
 ## Panel y seguridad
 
@@ -86,7 +98,7 @@ src/components/     Componentes del sitio, del panel (admin/) y base (ui/)
 - **Bloqueo temporal**: 5 intentos fallidos bloquean la cuenta 15 minutos. Un administrador puede desbloquearla desde _Usuarios y permisos_.
 - **Correos autorizados**: solo se pueden crear cuentas con los dominios de `ADMIN_EMAIL_DOMAINS` (por defecto gmail.com y vitalfoods.pe).
 - **Contraseñas** de mínimo 10 caracteres, guardadas con bcrypt. El secreto de la verificación en dos pasos se guarda cifrado con una clave derivada de `SESSION_SECRET`; si se cambia esa variable, hay que restablecer la verificación de cada usuario.
-- **Permisos por sección**: los administradores acceden a todo; a cada editor se le eligen las secciones que puede modificar (platillos, categorías, sedes, banners).
+- **Permisos por sección**: los administradores acceden a todo; a cada editor se le eligen las secciones que puede modificar (platillos, categorías, sedes, banners, empresa y Nosotros).
 - **Historial de cambios**: registra quién creó, modificó o eliminó algo y cuándo. La campana del panel muestra pendientes y cambios recientes.
 
 ### Recuperar el acceso de administrador

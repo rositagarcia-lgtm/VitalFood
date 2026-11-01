@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import "./site.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -151,51 +152,6 @@
 
 @utility animate-slide-in {
   animation: slide-in 500ms ease-out both;
-}
-
-.campaign-banner {
-  min-height: 680px;
-  background: var(--color-cream);
-  color: var(--color-foreground);
-}
-.campaign-shade {
-  background: linear-gradient(
-    115deg,
-    var(--color-cream),
-    color-mix(in oklab, var(--color-lime-soft) 58%, var(--color-cream))
-  );
-}
-.campaign-practicality .campaign-shade {
-  background: linear-gradient(
-    115deg,
-    var(--color-background),
-    color-mix(in oklab, var(--color-primary) 16%, var(--color-cream))
-  );
-}
-.campaign-organization .campaign-shade {
-  background: linear-gradient(
-    115deg,
-    color-mix(in oklab, var(--color-brand-wine) 8%, var(--color-cream)),
-    var(--color-cream)
-  );
-}
-.campaign-feature {
-  background: var(--color-brand-wine);
-  color: var(--color-brand-wine-foreground);
-}
-.campaign-practicality .campaign-feature {
-  background: var(--color-primary);
-  color: var(--color-primary-foreground);
-}
-.campaign-organization .campaign-feature:nth-child(even) {
-  background: var(--color-primary);
-  color: var(--color-primary-foreground);
-}
-
-@media (max-width: 767px) {
-  .campaign-banner {
-    min-height: 720px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

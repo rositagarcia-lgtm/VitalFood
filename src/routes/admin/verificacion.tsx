@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { Link, createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Loader2, ShieldCheck, Smartphone } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
+import { Loader2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/admin/ui";
+import { AuthLayout } from "@/components/admin/AuthLayout";
 import { useAdminTheme } from "@/components/admin/hooks";
 import { getCurrentUser, getMfaState, startMfaSetup, verifyMfa } from "@/functions/auth";
 
@@ -43,116 +44,136 @@ function VerificacionPage() {
       );
   }, [configurar]);
 
-  const onSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const enviando = useRef(false);
+  const enviar = async (valor: string) => {
+    if (enviando.current) return;
+    enviando.current = true;
     setError(null);
     setPending(true);
     try {
-      await verifyMfa({ data: { code } });
+      await verifyMfa({ data: { code: valor } });
       await router.invalidate();
       await navigate({ to: "/admin" });
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo verificar el código.");
       setCode("");
       setPending(false);
+      document.getElementById("code")?.focus();
+    } finally {
+      enviando.current = false;
     }
   };
 
-  return (
-    <div className="grid min-h-screen place-items-center bg-muted/40 px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="mb-6 flex flex-col items-center text-center">
-          <span className="grid size-12 place-items-center rounded-full bg-primary text-primary-foreground">
-            <ShieldCheck className="size-6" />
-          </span>
-          <h1 className="mt-4 text-2xl font-extrabold">Verificación en dos pasos</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Paso 2 de 2 · {estado.email}</p>
-        </div>
+  const onSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (code.length === 6) void enviar(code);
+  };
 
-        <form
-          onSubmit={onSubmit}
-          className="grid gap-5 rounded-xl border bg-card p-6 shadow-sm"
-          noValidate
-        >
-          {configurar ? (
-            <div className="grid gap-4 text-sm">
-              <p className="font-semibold">
-                Por seguridad, el panel pide un código de tu celular además de la contraseña. Solo
-                se configura una vez:
-              </p>
-              <ol className="grid list-decimal gap-2 pl-5 text-muted-foreground">
-                <li>
-                  Instala una app de autenticación en tu celular:{" "}
-                  <strong className="text-foreground">Google Authenticator</strong> o{" "}
+  return (
+    <AuthLayout
+      paso={2}
+      titulo={configurar ? "Protege tu cuenta" : "Verificación en dos pasos"}
+      subtitulo={
+        <>
+          Ingresando como <strong className="text-foreground">{estado.email}</strong>
+        </>
+      }
+      volver={{ to: "/admin/login", label: "Cambiar de cuenta" }}
+    >
+      <form onSubmit={onSubmit} className="grid gap-5" noValidate>
+        {configurar ? (
+          <div className="grid gap-4 text-sm">
+            <p className="font-semibold">
+              Además de la contraseña, el panel pide un código de tu celular. Solo se configura una
+              vez:
+            </p>
+            <ol className="grid gap-2.5 text-muted-foreground">
+              {[
+                <>
+                  Instala <strong className="text-foreground">Google Authenticator</strong> o{" "}
                   <strong className="text-foreground">Microsoft Authenticator</strong>.
+                </>,
+                <>En la app, elige “Agregar cuenta” y escanea este código.</>,
+                <>Escribe abajo el código de 6 dígitos que aparece en la app.</>,
+              ].map((t, i) => (
+                <li key={i} className="flex gap-3">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-lime-soft text-xs font-extrabold text-brand-wine">
+                    {i + 1}
+                  </span>
+                  <span>{t}</span>
                 </li>
-                <li>En la app, elige “Agregar cuenta” y escanea este código.</li>
-                <li>Escribe abajo el código de 6 dígitos que aparece en la app.</li>
-              </ol>
-              <div className="grid place-items-center rounded-lg border bg-white p-3">
-                {setup ? (
-                  <div
-                    role="img"
-                    aria-label="Código QR para vincular la app de autenticación"
-                    className="size-48 [&>svg]:h-full [&>svg]:w-full"
-                    dangerouslySetInnerHTML={{ __html: setup.qr }}
-                  />
-                ) : (
-                  <Loader2 className="my-20 size-6 animate-spin text-muted-foreground" />
-                )}
-              </div>
-              {setup && (
-                <details className="rounded-lg bg-muted/60 px-3 py-2 text-xs">
-                  <summary className="cursor-pointer font-semibold">
-                    ¿No puedes escanear? Escribe esta clave
-                  </summary>
-                  <code className="mt-2 block break-all font-mono text-sm tracking-wider">
-                    {setup.secret.match(/.{1,4}/g)?.join(" ")}
-                  </code>
-                </details>
+              ))}
+            </ol>
+            <div className="grid place-items-center rounded-xl border bg-white p-3">
+              {setup ? (
+                <div
+                  role="img"
+                  aria-label="Código QR para vincular la app de autenticación"
+                  className="size-44 [&>svg]:h-full [&>svg]:w-full"
+                  dangerouslySetInnerHTML={{ __html: setup.qr }}
+                />
+              ) : (
+                <Loader2 className="my-16 size-6 animate-spin text-muted-foreground" />
               )}
             </div>
-          ) : (
-            <p className="flex items-start gap-3 text-sm text-muted-foreground">
-              <Smartphone className="mt-0.5 size-5 shrink-0 text-brand-wine" />
-              Abre tu app de autenticación y escribe el código de 6 dígitos de Vital Foods.
-            </p>
-          )}
+            {setup && (
+              <details className="rounded-lg bg-muted/60 px-3 py-2 text-xs">
+                <summary className="cursor-pointer font-semibold">
+                  ¿No puedes escanear? Escribe esta clave
+                </summary>
+                <code className="mt-2 block break-all font-mono text-sm tracking-wider">
+                  {setup.secret.match(/.{1,4}/g)?.join(" ")}
+                </code>
+              </details>
+            )}
+          </div>
+        ) : (
+          <p className="flex items-start gap-3 rounded-xl bg-lime-soft/60 p-4 text-sm text-foreground">
+            <Smartphone className="mt-0.5 size-5 shrink-0 text-brand-wine" />
+            Abre tu app de autenticación y escribe el código de 6 dígitos de Vital Foods. Cambia
+            cada 30 segundos.
+          </p>
+        )}
 
-          <Field label="Código de 6 dígitos" htmlFor="code">
-            <Input
-              id="code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              pattern="[0-9]*"
-              maxLength={6}
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-              className="h-12 text-center font-mono text-2xl tracking-[0.5em]"
-              autoFocus
-              required
-            />
-          </Field>
-          {error && (
-            <p
-              role="alert"
-              className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            >
-              {error}
-            </p>
-          )}
-          <Button type="submit" variant="burgundy" disabled={pending || code.length !== 6}>
-            {pending && <Loader2 className="animate-spin" />}
-            {configurar ? "Activar y entrar" : "Verificar y entrar"}
-          </Button>
-        </form>
-        <Link
-          to="/admin/login"
-          className="mt-6 flex items-center justify-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        <Field label="Código de 6 dígitos" htmlFor="code">
+          <Input
+            id="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]*"
+            maxLength={6}
+            value={code}
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, "").slice(0, 6);
+              setCode(v);
+              // Se envía solo al completar los 6 dígitos
+              if (v.length === 6) void enviar(v);
+            }}
+            disabled={pending}
+            className="h-14 text-center font-mono text-3xl tracking-[0.5em]"
+            placeholder="······"
+            autoFocus
+            required
+          />
+        </Field>
+        {error && (
+          <p
+            role="alert"
+            className="rounded-lg bg-destructive/10 px-3 py-2.5 text-sm font-medium text-destructive"
+          >
+            {error}
+          </p>
+        )}
+        <Button
+          type="submit"
+          variant="burgundy"
+          disabled={pending || code.length !== 6}
+          className="h-12 text-base"
         >
-          <ArrowLeft className="size-4" /> Volver al inicio de sesión
-        </Link>
-      </div>
-    </div>
+          {pending && <Loader2 className="animate-spin" />}
+          {pending ? "Verificando…" : configurar ? "Activar y entrar" : "Verificar y entrar"}
+        </Button>
+      </form>
+    </AuthLayout>
   );
 }

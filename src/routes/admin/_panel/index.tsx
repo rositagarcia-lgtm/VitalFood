@@ -1,6 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   ArrowUpRight,
+  Building2,
   CheckCircle2,
   Info,
   MapPin,
@@ -57,6 +58,13 @@ const quickActions: {
     description: "Imágenes y mensajes del inicio de la web",
     to: "/admin/promociones",
     icon: Megaphone,
+  },
+  {
+    modulo: "empresa",
+    title: "Empresa y Nosotros",
+    description: "Contacto, redes, cifras, misión, visión y opiniones",
+    to: "/admin/empresa",
+    icon: Building2,
   },
 ];
 

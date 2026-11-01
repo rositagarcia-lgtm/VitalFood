@@ -188,3 +188,112 @@ END $$;
 
 ALTER TABLE promociones ALTER COLUMN enlace_boton SET DEFAULT '/menu';
 UPDATE promociones SET enlace_boton = '/menu' WHERE enlace_boton = '#platillos';
+
+-- información de la empresa (una sola fila, editable desde el panel) -------
+
+CREATE TABLE IF NOT EXISTS empresa (
+  id                   INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  nombre               VARCHAR(80) NOT NULL DEFAULT 'Vital Foods',
+  eslogan              VARCHAR(200) NOT NULL DEFAULT 'Comida fresca, nutritiva y deliciosa para acompañar cada momento de tu día.',
+  ciudad               VARCHAR(80) NOT NULL DEFAULT 'Trujillo',
+  anio_fundacion       INTEGER CHECK (anio_fundacion IS NULL OR anio_fundacion BETWEEN 1950 AND 2100),
+  clientes_mes         INTEGER CHECK (clientes_mes IS NULL OR clientes_mes >= 0),
+  equipo               INTEGER CHECK (equipo IS NULL OR equipo >= 0),
+  intro_titulo         VARCHAR(160),
+  intro_texto          VARCHAR(500),
+  historia_titulo      VARCHAR(160),
+  historia_texto       TEXT,
+  mision               VARCHAR(400),
+  vision               VARCHAR(400),
+  imagen_url           VARCHAR(500),
+  imagen_public_id     VARCHAR(255),
+  whatsapp             VARCHAR(20),
+  telefono             VARCHAR(30),
+  email                VARCHAR(150),
+  horario              VARCHAR(160),
+  instagram            VARCHAR(300),
+  facebook             VARCHAR(300),
+  tiktok               VARCHAR(300),
+  resenas_url          VARCHAR(300),
+  reclamaciones_url    VARCHAR(300),
+  updated_at           TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO empresa (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+-- bloques de la página Nosotros: valores, garantías, hitos y opiniones --------
+
+CREATE TABLE IF NOT EXISTS bloques (
+  id          SERIAL PRIMARY KEY,
+  tipo        VARCHAR(20) NOT NULL CHECK (tipo IN ('valor', 'garantia', 'hito', 'opinion')),
+  titulo      VARCHAR(120) NOT NULL,
+  texto       VARCHAR(500) NOT NULL,
+  icono       VARCHAR(40) NOT NULL DEFAULT 'leaf',
+  anio        INTEGER,
+  autor       VARCHAR(80),
+  detalle     VARCHAR(120),
+  estrellas   INTEGER CHECK (estrellas IS NULL OR estrellas BETWEEN 1 AND 5),
+  orden       INTEGER NOT NULL DEFAULT 0,
+  activo      BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- detalle y nutrición de cada platillo --------------------------------------
+
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS slug VARCHAR(120);
+UPDATE platillos SET slug = trim(both '-' from regexp_replace(
+  lower(translate(nombre, 'ÁÉÍÓÚÜÑáéíóúüñ&', 'AEIOUUNaeiouuny')), '[^a-z0-9]+', '-', 'g'))
+WHERE slug IS NULL;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'platillos_slug_key') THEN
+    ALTER TABLE platillos ADD CONSTRAINT platillos_slug_key UNIQUE (slug);
+  END IF;
+END $$;
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS porcion_g INTEGER CHECK (porcion_g IS NULL OR porcion_g > 0);
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS proteinas NUMERIC(6, 1) CHECK (proteinas IS NULL OR proteinas >= 0);
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS carbohidratos NUMERIC(6, 1) CHECK (carbohidratos IS NULL OR carbohidratos >= 0);
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS grasas NUMERIC(6, 1) CHECK (grasas IS NULL OR grasas >= 0);
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS fibra NUMERIC(6, 1) CHECK (fibra IS NULL OR fibra >= 0);
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS kcal_manual INTEGER CHECK (kcal_manual IS NULL OR kcal_manual >= 0);
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS etiquetas TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS objetivos TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS ingredientes TEXT;
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS alergenos VARCHAR(300);
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS conservacion VARCHAR(300);
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS personalizable BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE platillos ADD COLUMN IF NOT EXISTS galeria JSONB NOT NULL DEFAULT '[]';
+
+-- opciones para personalizar platillos (tamaño, proteína, base y extras) ------
+
+CREATE TABLE IF NOT EXISTS opciones (
+  id             SERIAL PRIMARY KEY,
+  grupo          VARCHAR(20) NOT NULL CHECK (grupo IN ('tamano', 'proteina', 'base', 'extra')),
+  nombre         VARCHAR(80) NOT NULL,
+  detalle        VARCHAR(80),
+  precio_extra   NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (precio_extra >= 0),
+  proteinas      NUMERIC(6, 1) NOT NULL DEFAULT 0,
+  carbohidratos  NUMERIC(6, 1) NOT NULL DEFAULT 0,
+  grasas         NUMERIC(6, 1) NOT NULL DEFAULT 0,
+  fibra          NUMERIC(6, 1) NOT NULL DEFAULT 0,
+  factor         NUMERIC(4, 2) NOT NULL DEFAULT 1 CHECK (factor > 0 AND factor <= 3),
+  orden          INTEGER NOT NULL DEFAULT 0,
+  activo         BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- el módulo "empresa" se agrega a los permisos asignables
+ALTER TABLE usuarios ALTER COLUMN permisos SET DEFAULT ARRAY['platillos', 'categorias', 'sedes', 'promociones'];
+
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['empresa', 'bloques', 'opciones'] LOOP
+    EXECUTE format('DROP TRIGGER IF EXISTS trg_%s_updated_at ON %I', t, t);
+    EXECUTE format(
+      'CREATE TRIGGER trg_%s_updated_at BEFORE UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION set_updated_at()',
+      t, t
+    );
+  END LOOP;
+END $$;

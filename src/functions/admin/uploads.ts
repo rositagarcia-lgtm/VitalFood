@@ -5,7 +5,7 @@ import { requireModule } from "@/server/session";
 import { validate } from "@/server/validation";
 
 export const getUploadSignature = createServerFn({ method: "POST" })
-  .validator(validate(z.object({ carpeta: z.enum(["platillos", "promociones"]) })))
+  .validator(validate(z.object({ carpeta: z.enum(["platillos", "promociones", "empresa"]) })))
   .handler(async ({ data }) => {
     await requireModule(data.carpeta);
     return createUploadSignature(data.carpeta);

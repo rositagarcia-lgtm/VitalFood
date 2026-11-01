@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
+  Building2,
   ChevronLeft,
   ExternalLink,
   History,
@@ -9,6 +10,8 @@ import {
   MapPin,
   Megaphone,
   ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
   Tags,
   UsersRound,
   UtensilsCrossed,
@@ -94,6 +97,11 @@ export function AdminSidebar({
           icon: UtensilsCrossed,
         }),
         ...mod("categorias", { label: "Categorías", to: "/admin/categorias", icon: Tags }),
+        ...mod("platillos", {
+          label: "Opciones para personalizar",
+          to: "/admin/opciones",
+          icon: SlidersHorizontal,
+        }),
       ],
     },
     {
@@ -104,6 +112,16 @@ export function AdminSidebar({
           label: "Banners de portada",
           to: "/admin/promociones",
           icon: Megaphone,
+        }),
+        ...mod("empresa", {
+          label: "Información de la empresa",
+          to: "/admin/empresa",
+          icon: Building2,
+        }),
+        ...mod("empresa", {
+          label: "Contenido de Nosotros",
+          to: "/admin/nosotros",
+          icon: Sparkles,
         }),
       ],
     },

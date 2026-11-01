@@ -8,7 +8,7 @@ import { logActivity } from "@/server/activity";
 import { assertAllowedEmail } from "@/server/email-policy";
 import type { Actividad, Usuario } from "@/lib/types";
 
-const MODULOS = ["platillos", "categorias", "sedes", "promociones"] as const;
+const MODULOS = ["platillos", "categorias", "sedes", "promociones", "empresa"] as const;
 
 const usuarioSchema = z.object({
   id: z.number().int().positive().optional(),

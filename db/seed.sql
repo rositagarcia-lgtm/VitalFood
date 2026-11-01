@@ -54,3 +54,42 @@ WHERE NOT EXISTS (SELECT 1 FROM promociones p WHERE p.titulo = v.titulo);
 UPDATE platillos SET destacado = TRUE
 WHERE nombre IN ('Bowl Vital', 'Tostadas tropicales', 'Ensalada Mediterránea')
   AND NOT EXISTS (SELECT 1 FROM platillos WHERE destacado);
+
+-- Textos iniciales de la empresa (se editan en el panel). Las cifras quedan vacías a propósito:
+-- solo se muestran en la web cuando la empresa ingresa datos reales.
+UPDATE empresa SET
+  intro_titulo = COALESCE(intro_titulo, 'Cocinamos lo que nos gustaría comer cada día'),
+  intro_texto = COALESCE(intro_texto, 'Preparamos comida saludable, fresca y deliciosa en Trujillo para personas con poco tiempo y muchas ganas de cuidarse.'),
+  historia_titulo = COALESCE(historia_titulo, 'Comer sano también puede ser delicioso'),
+  historia_texto = COALESCE(historia_texto, 'En Vital Foods creemos que comer saludable también puede ser delicioso. Preparamos opciones frescas y nutritivas para acompañar el día a día de quienes buscan cuidar su alimentación sin dejar de disfrutar.'),
+  mision = COALESCE(mision, 'Ofrecer comida saludable, fresca y deliciosa que se adapte al ritmo de vida de nuestros clientes.'),
+  vision = COALESCE(vision, 'Ser la marca de alimentación saludable de referencia en el norte del Perú.'),
+  email = COALESCE(email, 'hola@vitalfoods.pe')
+WHERE id = 1;
+
+INSERT INTO bloques (tipo, titulo, texto, icono, orden)
+SELECT * FROM (VALUES
+  ('valor', 'Frescura', 'Preparamos nuestros platos con ingredientes frescos.', 'leaf', 1),
+  ('valor', 'Nutrición', 'Porciones balanceadas para comer bien.', 'heart', 2),
+  ('valor', 'Cercanía', 'Escuchamos a nuestros clientes y mejoramos con ellos.', 'users', 3),
+  ('valor', 'Sabor', 'Comer saludable también puede ser delicioso.', 'sparkles', 4)
+) AS v (tipo, titulo, texto, icono, orden)
+WHERE NOT EXISTS (SELECT 1 FROM bloques);
+
+-- Opciones de partida para personalizar platos (valores referenciales que el equipo ajusta en el panel).
+-- No se muestran hasta marcar un plato como personalizable.
+INSERT INTO opciones (grupo, nombre, detalle, precio_extra, proteinas, carbohidratos, grasas, fibra, factor, orden)
+SELECT * FROM (VALUES
+  ('tamano', 'Regular', 'Porción normal', 0, 0, 0, 0, 0, 1.0, 1),
+  ('tamano', 'Grande', '30 % más', 5, 0, 0, 0, 0, 1.3, 2),
+  ('proteina', 'Pollo grillado', NULL, 0, 0, 0, 0, 0, 1.0, 1),
+  ('proteina', 'Res magra', NULL, 3, 4, 0, 5, 0, 1.0, 2),
+  ('proteina', 'Tofu', NULL, 0, -14, 3, 2, 1, 1.0, 3),
+  ('base', 'Quinua', NULL, 0, 0, 0, 0, 0, 1.0, 1),
+  ('base', 'Arroz integral', NULL, 0, -2, 10, 0, -1, 1.0, 2),
+  ('base', 'Mix de hojas', NULL, 0, -5, -28, -2, 1, 1.0, 3),
+  ('extra', 'Palta', NULL, 3, 1, 4, 11, 4, 1.0, 1),
+  ('extra', 'Huevo', NULL, 2.5, 6, 0, 5, 0, 1.0, 2),
+  ('extra', 'Porción extra de proteína', NULL, 6, 20, 0, 3, 0, 1.0, 3)
+) AS v (grupo, nombre, detalle, precio_extra, proteinas, carbohidratos, grasas, fibra, factor, orden)
+WHERE NOT EXISTS (SELECT 1 FROM opciones);
