@@ -7,6 +7,7 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { NavProgress } from "@/components/NavProgress";
 
 import appCss from "../styles.css?url";
 
@@ -39,10 +40,19 @@ export const Route = createRootRoute({
     ],
   }),
   shellComponent: RootShell,
-  component: Outlet,
+  component: RootLayout,
   notFoundComponent: NotFound,
   errorComponent: ErrorPage,
 });
+
+function RootLayout() {
+  return (
+    <>
+      <NavProgress />
+      <Outlet />
+    </>
+  );
+}
 
 function RootShell({ children }: { children: ReactNode }) {
   return (

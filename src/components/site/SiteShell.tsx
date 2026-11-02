@@ -1,5 +1,5 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { Clock, House, Info, Leaf, Mail, MapPin, Phone, UtensilsCrossed } from "lucide-react";
 import { FacebookIcon, Ico, InstagramIcon, TikTokIcon, WhatsAppIcon } from "@/lib/icons";
 import { formatPhone, waLink } from "@/lib/contact";
@@ -22,14 +22,19 @@ function usePath() {
   return useRouterState({ select: (s) => s.location.pathname });
 }
 
-/** Aparición al hacer scroll: agrega la clase "in" cuando cada bloque entra en pantalla. */
-function useReveal(path: string) {
-  useEffect(() => {
-    const els = document.querySelectorAll<HTMLElement>(".vf .reveal:not(.in)");
-    if (!("IntersectionObserver" in window)) {
-      els.forEach((el) => el.classList.add("in"));
-      return;
-    }
+/**
+ * Aparición al hacer scroll. El contenido llega visible desde el servidor; recién cuando la página
+ * cargó sus scripts se activa la animación (clase "anim" en <html>). Los bloques que ya están en
+ * pantalla se marcan antes de pintar para que no parpadeen, y un MutationObserver detecta los
+ * bloques que aparecen al navegar entre páginas, así ninguno queda invisible.
+ */
+function useReveal() {
+  useLayoutEffect(() => {
+    const root = document.querySelector(".vf");
+    if (!root) return;
+    const visible = (el: Element) => el.getBoundingClientRect().top < window.innerHeight;
+    if (!("IntersectionObserver" in window) || !("MutationObserver" in window)) return;
+
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
@@ -38,11 +43,64 @@ function useReveal(path: string) {
           io.unobserve(e.target);
         }
       },
-      { threshold: 0.2 },
+      { threshold: 0.15 },
     );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, [path]);
+    const vistos = new WeakSet<Element>();
+    const scan = (marcarVisibles: boolean) => {
+      root.querySelectorAll(".reveal:not(.in)").forEach((el) => {
+        if (vistos.has(el)) return;
+        vistos.add(el);
+        if (marcarVisibles && visible(el)) el.classList.add("in");
+        else io.observe(el);
+      });
+    };
+    scan(true);
+    document.documentElement.classList.add("anim");
+    const mo = new MutationObserver(() => scan(false));
+    mo.observe(root, { childList: true, subtree: true });
+    // Si se baja muy rápido, un bloque puede quedar arriba sin haber cruzado la pantalla
+    let raf = 0;
+    const pasados = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() =>
+        root.querySelectorAll(".reveal:not(.in)").forEach((el) => {
+          if (el.getBoundingClientRect().bottom < 0) el.classList.add("in");
+        }),
+      );
+    };
+    window.addEventListener("scroll", pasados, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", pasados);
+      cancelAnimationFrame(raf);
+      mo.disconnect();
+      io.disconnect();
+      document.documentElement.classList.remove("anim");
+    };
+  }, []);
+}
+
+/**
+ * Mantiene los datos al día sin recargar: vuelve a pedirlos al regresar a la pestaña (por ejemplo,
+ * después de guardar algo en el panel) y cada minuto mientras la página está a la vista.
+ */
+function useAutoRefresh() {
+  const router = useRouter();
+  useEffect(() => {
+    let ultimo = Date.now();
+    const refrescar = () => {
+      if (document.visibilityState !== "visible" || Date.now() - ultimo < 5000) return;
+      ultimo = Date.now();
+      void router.invalidate();
+    };
+    const timer = window.setInterval(refrescar, 60_000);
+    document.addEventListener("visibilitychange", refrescar);
+    window.addEventListener("focus", refrescar);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refrescar);
+      window.removeEventListener("focus", refrescar);
+    };
+  }, [router]);
 }
 
 export function Redes({ empresa, className }: { empresa: Empresa; className?: string }) {
@@ -72,7 +130,8 @@ export function SiteShell({ site, children }: { site: SiteData; children: ReactN
   const path = usePath();
   const { empresa, sedes } = site;
   const [hint, setHint] = useState(true);
-  useReveal(path);
+  useReveal();
+  useAutoRefresh();
 
   useEffect(() => {
     const t = window.setTimeout(() => setHint(false), 4000);

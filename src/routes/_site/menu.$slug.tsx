@@ -84,11 +84,15 @@ function PlatoPage() {
   const [sel, setSel] = useState<Seleccion>(() => defaultSelection(opciones));
   const [goal, setGoal] = useState<Objetivo | null>(null);
 
-  // Al pasar de un plato a otro (relacionados) se reinicia la elección
+  // Al pasar de un plato a otro (relacionados) o si cambian las opciones se reinicia la elección.
+  // No depende del arreglo en sí: la actualización automática trae uno nuevo cada vez y borraría
+  // lo que el cliente ya eligió.
+  const opcionesKey = opciones.map((o) => o.id).join(",");
   useEffect(() => {
     setSel(defaultSelection(opciones));
     setGoal(null);
-  }, [plato.id, opciones]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plato.id, opcionesKey]);
 
   const perso = plato.personalizable && opciones.length > 0;
   const t = useMemo(() => computeTotals(plato, opciones, sel), [plato, opciones, sel]);

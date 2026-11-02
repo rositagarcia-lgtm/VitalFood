@@ -4,7 +4,6 @@ import { getSiteData } from "@/functions/public";
 
 export const Route = createFileRoute("/_site")({
   loader: () => getSiteData(),
-  staleTime: 60_000,
   component: SiteLayout,
 });
 

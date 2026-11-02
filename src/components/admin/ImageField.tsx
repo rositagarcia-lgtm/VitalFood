@@ -43,7 +43,14 @@ function useUpload(carpeta: Carpeta, onDone: (value: ImageValue) => void) {
         error?: { message?: string };
       };
       if (!res.ok || !json.secure_url || !json.public_id) {
-        throw new Error(json.error?.message ?? "No se pudo subir la imagen.");
+        const msg = json.error?.message ?? "";
+        throw new Error(
+          /cloud_name/i.test(msg)
+            ? "El nombre de la cuenta de Cloudinary no es válido. Revisa CLOUDINARY_CLOUD_NAME en Render: debe ser el «Cloud name» del panel de Cloudinary."
+            : /api_key|signature/i.test(msg)
+              ? "Las credenciales de Cloudinary no coinciden. Revisa CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET en Render."
+              : msg || "No se pudo subir la imagen.",
+        );
       }
       onDone({ url: json.secure_url, publicId: json.public_id });
     } catch (e) {

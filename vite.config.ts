@@ -64,6 +64,25 @@ export default defineConfig(({ command, mode }) => {
         "react/jsx-dev-runtime",
       ],
     },
+    // En el navegador, agrupa el código del sitio público y los íconos en pocos archivos: antes la
+    // portada pedía unos 24 scripts pequeños (cada ícono por separado) y en Render se encolaban.
+    // Las librerías del panel quedan aparte para no cargarlas en la web pública.
+    environments: {
+      client: {
+        build: {
+          rolldownOptions: {
+            output: {
+              codeSplitting: {
+                groups: [
+                  { name: "icons", test: /lucide-react/, priority: 2 },
+                  { name: "site", test: /src\/(components\/site|lib|routes\/_site)/, priority: 1 },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
     plugins: [
       tailwindcss(),
       tsConfigPaths({ projects: ["./tsconfig.json"] }),

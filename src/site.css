@@ -181,15 +181,16 @@
   line-height: 1.7;
 }
 
-/* Aparición al hacer scroll */
-.vf .reveal {
+/* Aparición al hacer scroll: el contenido es visible por defecto y solo se oculta para animarlo
+   cuando la página ya cargó sus scripts (clase "anim" en <html>), así nunca queda en blanco. */
+.anim .vf .reveal {
   opacity: 0;
   transform: translateY(24px);
   transition:
     opacity 0.8s var(--vf-ease),
     transform 0.8s var(--vf-ease);
 }
-.vf .reveal.in {
+.anim .vf .reveal.in {
   opacity: 1;
   transform: none;
 }
@@ -323,7 +324,8 @@
     animation: none !important;
     transition: none !important;
   }
-  .vf .reveal {
+  .anim .vf .reveal,
+  .anim .vf .orb {
     opacity: 1;
     transform: none;
   }
@@ -618,14 +620,16 @@
   text-align: center;
   padding: 28px;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.28);
-  opacity: 0;
-  transform: translateY(40px) scale(0.92);
   transition:
     opacity 0.8s var(--vf-ease),
     transform 0.8s var(--vf-ease),
     box-shadow 0.4s;
 }
-.vf .stats.in .orb {
+.anim .vf .stats .orb {
+  opacity: 0;
+  transform: translateY(40px) scale(0.92);
+}
+.anim .vf .stats.in .orb {
   opacity: 1;
   transform: none;
 }
